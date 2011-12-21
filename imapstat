@@ -13,6 +13,7 @@ import optparse
 CHUNKSIZE = 1500
 MAILBOX = 'INBOX'
 BINS = 10
+MONTHLEN = 31
 
 def main():
     # Parse arguments
@@ -26,6 +27,7 @@ def main():
     p.add_option('-w', '--week', action='store_true', help='bin per week')
     help = 'bin per (approximate) month'
     p.add_option('-n', '--month', action='store_true', help=help)
+    p.add_option('-a', '--averages', action='store_true', help='averages')
     opts, args = p.parse_args()
 
     # Connect
@@ -53,31 +55,35 @@ def main():
 
     # Create data for histogram and close it
     d = date.fromtimestamp(dates[-1]) - date.fromtimestamp(dates[0])
-    if opts.day:
-        bins = d.days
-        title = "number of mails per day"
-    elif opts.week:
-        bins = d.days / 7
-        title = "number of mails per week"
-    elif opts.month:
-        bins = d.days / 31
-        title = "number of mails per (approximate) month"
+    if opts.averages:
+        print "%d mails/day" % (len(dates) / d.days)
+        print "%d mails/week" % (len(dates) / d.days * 7)
+        print "%d mails/month" % (len(dates) / d.days * MONTHLEN)
     else:
-        # Per what is that?
-        per = (datetime.fromtimestamp(dates[-1]) - \
-               datetime.fromtimestamp(dates[0])) / opts.bins
+        if opts.day:
+            bins = d.days
+            title = "number of mails per day"
+        elif opts.week:
+            bins = d.days / 7
+            title = "number of mails per week"
+        elif opts.month:
+            bins = d.days / MONTHLEN
+            title = "number of mails per (approximate) month"
+        else:
+            # Per what is that?
+            per = d / opts.bins
 
-        bins = opts.bins
-        title = "number of mails per %d days" % per.days
-    n, bins, patches = plt.hist(dates, bins=bins)
-    plt.close()
+            bins = opts.bins
+            title = "number of mails per %d days" % per.days
+        n, bins, patches = plt.hist(dates, bins=bins)
+        plt.close()
 
-    # Plot
-    fig, ax = plt.subplots(1)
-    plt.title(title)
-    fig.autofmt_xdate()
-    ax.plot([date.fromtimestamp(t) for t in bins[1:]], n)
-    plt.show()
+        # Plot
+        fig, ax = plt.subplots(1)
+        plt.title(title)
+        fig.autofmt_xdate()
+        ax.plot([date.fromtimestamp(t) for t in bins[1:]], n)
+        plt.show()
 
 if __name__ == '__main__':
     sys.exit(main())
