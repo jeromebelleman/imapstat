@@ -56,9 +56,9 @@ def main():
     # Create data for histogram and close it
     d = date.fromtimestamp(dates[-1]) - date.fromtimestamp(dates[0])
     if opts.averages:
-        print "%d mails/day" % (len(dates) / d.days)
-        print "%d mails/week" % (len(dates) / d.days * 7)
-        print "%d mails/month" % (len(dates) / d.days * MONTHLEN)
+        print "%.2f mails/day" % (float(len(dates)) / d.days)
+        print "%.2f mails/week" % (float(len(dates)) / d.days * 7)
+        print "%.2f mails/month" % (float(len(dates)) / d.days * MONTHLEN)
     else:
         if opts.day:
             bins = d.days
