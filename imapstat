@@ -3,12 +3,13 @@
 import sys
 import getpass
 import imaplib
-import datetime, time
+from datetime import date, datetime
+import time
 import matplotlib.pyplot as plt
 import optparse
 
 # Used to be 2000, but doesn't fit anymore, probably because the string
-# became too long what with that 5 character indices.
+# became too long what with these 5 character indices.
 CHUNKSIZE = 1500
 MAILBOX = 'INBOX'
 BINS = 10
@@ -19,10 +20,12 @@ def main():
     p.add_option('-s', '--server', help="server name")
     p.add_option('-m', '--mailbox', default=MAILBOX,
                  help="mailbox (defaults to %s)" % MAILBOX)
-    p.add_option('-b', '--bins', default=BINS,
+    p.add_option('-b', '--bins', default=BINS, type='int',
                  help="number of bins (defaults to %d)" % BINS)
     p.add_option('-d', '--day', action='store_true', help='bin per day')
     p.add_option('-w', '--week', action='store_true', help='bin per week')
+    help = 'bin per (approximate) month'
+    p.add_option('-n', '--month', action='store_true', help=help)
     opts, args = p.parse_args()
 
     # Connect
@@ -48,19 +51,24 @@ def main():
         for d in m.fetch(chunk, 'INTERNALDATE')[1]:
             dates.append(time.mktime(imaplib.Internaldate2tuple(d)))
 
-
     # Create data for histogram and close it
-    d = datetime.date.fromtimestamp(dates[-1]) - \
-        datetime.date.fromtimestamp(dates[0])
+    d = date.fromtimestamp(dates[-1]) - date.fromtimestamp(dates[0])
     if opts.day:
         bins = d.days
         title = "number of mails per day"
     elif opts.week:
         bins = d.days / 7
         title = "number of mails per week"
+    elif opts.month:
+        bins = d.days / 31
+        title = "number of mails per (approximate) month"
     else:
+        # Per what is that?
+        per = (datetime.fromtimestamp(dates[-1]) - \
+               datetime.fromtimestamp(dates[0])) / opts.bins
+
         bins = opts.bins
-        title = "number of mails"
+        title = "number of mails per %d days" % per.days
     n, bins, patches = plt.hist(dates, bins=bins)
     plt.close()
 
@@ -68,7 +76,7 @@ def main():
     fig, ax = plt.subplots(1)
     plt.title(title)
     fig.autofmt_xdate()
-    ax.plot([datetime.date.fromtimestamp(t) for t in bins[1:]], n)
+    ax.plot([date.fromtimestamp(t) for t in bins[1:]], n)
     plt.show()
 
 if __name__ == '__main__':
