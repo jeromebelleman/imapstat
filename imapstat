@@ -19,6 +19,8 @@ def main():
     # Parse arguments
     p = optparse.OptionParser()
     p.add_option('-s', '--server', help="server name")
+    p.add_option('-p', '--port', default=143, help="server port")
+    p.add_option('-l', '--disableSSL')
     p.add_option('-m', '--mailbox', default=MAILBOX,
                  help="mailbox (defaults to %s)" % MAILBOX)
     p.add_option('-b', '--bins', default=BINS, type='int',
@@ -31,7 +33,11 @@ def main():
     opts, args = p.parse_args()
 
     # Connect
-    m = imaplib.IMAP4_SSL(opts.server)
+    if opts.disableSSL:
+        m = imaplib.IMAP4(opts.server, opts.port)
+    else:
+        m = imaplib.IMAP4_SSL(opts.server)
+
     m.login(raw_input('Login: '), getpass.getpass())
 
     # Select mailbox
@@ -84,6 +90,9 @@ def main():
         fig.autofmt_xdate()
         ax.plot([date.fromtimestamp(t) for t in bins[1:]], n)
         plt.show()
+
+    m.close()
+    m.logout()
 
 if __name__ == '__main__':
     sys.exit(main())
